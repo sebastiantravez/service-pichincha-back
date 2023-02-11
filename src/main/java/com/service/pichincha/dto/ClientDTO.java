@@ -1,34 +1,34 @@
-package com.service.pichincha.entities;
+package com.service.pichincha.dto;
 
 import com.service.pichincha.entities.enums.GenderPerson;
 import com.service.pichincha.entities.enums.IdentificationPattern;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.MappedSuperclass;
+import lombok.Builder;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
-import java.util.Date;
+import java.util.UUID;
 
-@MappedSuperclass
 @Data
-public class Person {
+@Builder
+public class ClientDTO {
+    private UUID clientId;
     @NotNull
     private String fullName;
     @NotNull
-    @Enumerated(EnumType.STRING)
     private GenderPerson genderPerson;
     @Positive
     private Integer age;
     @NotNull
     private String dni;
     @NotNull
-    @Enumerated(EnumType.STRING)
     private IdentificationPattern identificationPattern;
     @NotNull
     private String address;
     @NotNull
     private String phone;
-    private Date createDate;
+    @NotNull
+    private String password;
+    @NotNull
+    private Boolean status;
 }
