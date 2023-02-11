@@ -2,27 +2,16 @@ package com.service.pichincha.entities;
 
 import com.service.pichincha.entities.enums.GenderPerson;
 import com.service.pichincha.entities.enums.IdentificationPattern;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import jakarta.persistence.*;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.MappedSuperclass;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import java.util.Date;
-import java.util.UUID;
 
-@Entity
-@Table(name = "persons")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@MappedSuperclass
 public class Person {
-    @Id
-    @GeneratedValue
-    private UUID personId;
     @NotNull
     private String fullName;
     @NotNull
@@ -40,6 +29,4 @@ public class Person {
     @NotNull
     private String phone;
     private Date createDate;
-    @OneToOne(mappedBy = "person", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Client client;
 }

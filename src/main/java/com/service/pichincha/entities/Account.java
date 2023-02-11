@@ -15,7 +15,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Table(name = "accounts")
@@ -26,7 +25,7 @@ import java.util.UUID;
 public class Account {
     @Id
     @GeneratedValue
-    private UUID accountId;
+    private Long accountId;
     @NotNull
     @Column(unique = true)
     private String accountNumber;

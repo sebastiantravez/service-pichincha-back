@@ -10,7 +10,6 @@ import jakarta.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Table(name = "clients")
@@ -18,13 +17,10 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Client {
+public class Client extends Person{
     @Id
     @GeneratedValue
-    private UUID clientId;
-    @OneToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "person_id")
-    private Person person;
+    private Long clientId;
     @NotNull
     private String password;
     @Builder.Default
