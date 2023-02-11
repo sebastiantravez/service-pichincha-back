@@ -38,7 +38,6 @@ CREATE TABLE public.accounts (
 );
 ALTER TABLE public.accounts ADD CONSTRAINT fk_accounts_on_client FOREIGN KEY (client_id) REFERENCES public.clients(client_id);
 
-
 --MOVEMENTS
 CREATE TABLE public.movements (
 	movement_id uuid NOT NULL,
