@@ -14,7 +14,4 @@ public enum AmountLimit {
         this.value = value;
     }
 
-    public BigDecimal getValue() {
-        return value;
-    }
 }

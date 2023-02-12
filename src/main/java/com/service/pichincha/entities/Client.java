@@ -26,6 +26,6 @@ public class Client extends Person{
     @Builder.Default
     private Boolean status = Boolean.TRUE;
     @Builder.Default
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "client")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "client", fetch = FetchType.EAGER)
     private List<Account> accounts = new ArrayList<>();
 }
