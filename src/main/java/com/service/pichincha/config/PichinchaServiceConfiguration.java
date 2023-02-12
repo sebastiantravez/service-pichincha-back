@@ -14,7 +14,7 @@ public class PichinchaServiceConfiguration {
         return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     }
 
-    @Bean("modelMapperWithoutStrict")
+    @Bean
     public ModelMapper modelMapperWithoutStrict() {
         ModelMapper modelMapper = new ModelMapper();
         return modelMapper;

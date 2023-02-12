@@ -2,12 +2,18 @@ package com.service.pichincha.dto;
 
 import com.service.pichincha.entities.enums.GenderPerson;
 import com.service.pichincha.entities.enums.IdentificationPattern;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ClientDTO {
     private Long clientId;
     @NotNull
