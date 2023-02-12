@@ -128,7 +128,7 @@ public class AccountServiceImpl implements AccountService {
                     line.setMovementDate(dateFormat.format(item.getMovementDate()));
                     line.setMovementType(item.getMovementType().name());
                     line.setMovementAmount(item.getMovementAmount());
-                    line.setBalanceAvailable(item.getMovementAmount().setScale(2, RoundingMode.HALF_UP));
+                    line.setBalanceAvailable(item.getBalanceAvailable().setScale(2, RoundingMode.HALF_UP));
                     line.setObservation(item.getObservation());
                     return line;
                 }).collect(Collectors.toList());
