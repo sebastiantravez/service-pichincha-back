@@ -108,19 +108,19 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public AccountReportDTO getAccountStatus(Long clientId, AccountType accountType, Date initDate, Date endDate) {
         Account account = accountRepository.findAccountsMovements(clientId, accountType, initDate, endDate)
-                .orElseThrow(() -> new GenericException("Cliente sin registros"));
-        AccountReportDTO parameters = new AccountReportDTO();
+                .orElseThrow(() -> new GenericException("Cliente sin movimientos en su cuenta"));
+        AccountReportDTO reportDTO = new AccountReportDTO();
         DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
         String initDateFormat = dateFormat.format(initDate);
         String endDateFormat = dateFormat.format(endDate);
-        parameters.setFullName(account.getClient().getFullName());
-        parameters.setDni(account.getClient().getDni());
-        parameters.setAccountType(account.getAccountType().name());
-        parameters.setAccountNumber(account.getAccountNumber());
-        parameters.setInitialAmount(account.getInitialAmount().setScale(2, RoundingMode.HALF_UP));
-        parameters.setInitDate(initDateFormat);
-        parameters.setEndDate(endDateFormat);
-        parameters.setStatus(account.getStatus() ? "ACTIVO" : "INACTIVO");
+        reportDTO.setFullName(account.getClient().getFullName());
+        reportDTO.setDni(account.getClient().getDni());
+        reportDTO.setAccountType(account.getAccountType().name());
+        reportDTO.setAccountNumber(account.getAccountNumber());
+        reportDTO.setInitialAmount(account.getInitialAmount().setScale(2, RoundingMode.HALF_UP));
+        reportDTO.setInitDate(initDateFormat);
+        reportDTO.setEndDate(endDateFormat);
+        reportDTO.setStatus(account.getStatus() ? "ACTIVO" : "INACTIVO");
         List<AccountReportDetailDTO> detail = account.getMovements().stream()
                 .map(item -> {
                     AccountReportDetailDTO line = new AccountReportDetailDTO();
@@ -132,8 +132,8 @@ public class AccountServiceImpl implements AccountService {
                     line.setObservation(item.getObservation());
                     return line;
                 }).collect(Collectors.toList());
-        parameters.setAccountReportDetail(detail);
-        return parameters;
+        reportDTO.setAccountReportDetail(detail);
+        return reportDTO;
     }
 
     private AccountDTO buildAccountDTO(Account account) {

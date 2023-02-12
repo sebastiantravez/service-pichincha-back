@@ -27,11 +27,13 @@ import java.util.Date;
 public class Movements {
     @Id
     private Long movementId;
+    @NotNull
     private Date movementDate;
     @NotNull
     @Enumerated(EnumType.STRING)
+    @NotNull
     private MovementType movementType;
-    private String observation;
+    @NotNull
     private BigDecimal movementAmount;
     private BigDecimal balanceAvailable;
     @Enumerated(EnumType.STRING)
@@ -39,4 +41,5 @@ public class Movements {
     @ManyToOne
     @JoinColumn(name = "account_id")
     private Account account;
+    private String observation;
 }
