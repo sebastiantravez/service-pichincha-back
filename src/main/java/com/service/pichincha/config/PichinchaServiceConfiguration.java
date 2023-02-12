@@ -10,11 +10,6 @@ import java.text.SimpleDateFormat;
 public class PichinchaServiceConfiguration {
 
     @Bean
-    public SimpleDateFormat simpleDateFormat() {
-        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    }
-
-    @Bean
     public ModelMapper modelMapperWithoutStrict() {
         ModelMapper modelMapper = new ModelMapper();
         return modelMapper;

@@ -5,6 +5,7 @@ import com.service.pichincha.dto.ClientDTO;
 import com.service.pichincha.dto.MovementsDTO;
 import com.service.pichincha.entities.Account;
 import com.service.pichincha.entities.Movements;
+import com.service.pichincha.entities.enums.AmountLimit;
 import com.service.pichincha.entities.enums.MovementType;
 import com.service.pichincha.entities.enums.TransactionType;
 import com.service.pichincha.exception.GenericException;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -49,7 +51,7 @@ public class MovementsServiceImpl implements MovementsService {
                     }
                     BigDecimal amountAvailableDebit = account.getInitialAmount()
                             .subtract(movementsDTO.getMovementAmount()).setScale(2, RoundingMode.HALF_UP);
-                    if (amountAvailableDebit.compareTo(BigDecimal.ZERO) <= 0) {
+                    if (amountAvailableDebit.compareTo(BigDecimal.ZERO) < 0) {
                         throw new GenericException("Error: Saldo no disponible");
                     }
                     movements.setMovementAmount(movementsDTO.getMovementAmount());
@@ -74,6 +76,32 @@ public class MovementsServiceImpl implements MovementsService {
                         throw new GenericException("Error: El valor del retiro debe ser menor o igual al saldo disponible del cliente, " +
                                 "Su saldo disponible es de $:" + movementsQuery.getBalanceAvailable().setScale(2, RoundingMode.HALF_UP));
                     }
+
+                    //TODO verify limit amount per day
+                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+                    Date lastMovementDate = account.getMovements().stream()
+                            .filter(movements1 -> movements1.getMovementType().equals(MovementType.DEBITO))
+                            .map(data -> data.getMovementDate())
+                            .max(Date::compareTo).get();
+
+                    String nowDate = simpleDateFormat.format(new Date());
+                    String lastMovementDateString = simpleDateFormat.format(lastMovementDate);
+
+                    BigDecimal amountAccumulated = account.getMovements().stream()
+                            .filter(movementsFilter -> movementsFilter.getMovementType().equals(MovementType.DEBITO))
+                            .filter(dates -> {
+                                String dateFilter = simpleDateFormat.format(dates.getMovementDate());
+                                return lastMovementDateString.equals(dateFilter);
+                            })
+                            .map(amount -> amount.getMovementAmount())
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                    if (amountAccumulated.add(movementsDTO.getMovementAmount())
+                            .compareTo(AmountLimit.LIMIT_DAY.getValue()) > 0 && nowDate.equals(lastMovementDateString)) {
+                        throw new GenericException("Error: Cupo diario excedido");
+                    }
+
                     BigDecimal amountAvailableDebit = movementsQuery.getBalanceAvailable()
                             .subtract(movementsDTO.getMovementAmount()).setScale(2, RoundingMode.HALF_UP);
                     movements.setMovementAmount(movementsDTO.getMovementAmount());
@@ -97,26 +125,30 @@ public class MovementsServiceImpl implements MovementsService {
 
     @Override
     public MovementsDTO updateMovement(MovementsDTO movementsDTO) {
-        Movements movements = movementsRepository.findById(movementsDTO.getMovementId())
+        Movements movement = movementsRepository.findById(movementsDTO.getMovementId())
                 .orElseThrow(() -> new GenericException("Error: Movimiento no existe"));
         switch (movementsDTO.getMovementType()) {
             case DEBITO:
-                BigDecimal amountAvailableDebit = movements.getBalanceAvailable()
+                if (movementsDTO.getMovementAmount().compareTo(movement.getBalanceAvailable()) > 0) {
+                    throw new GenericException("Error: El valor del retiro debe ser menor o igual al saldo disponible del cliente, " +
+                            "Su saldo disponible es de $:" + movement.getBalanceAvailable().setScale(2, RoundingMode.HALF_UP));
+                }
+                BigDecimal amountAvailableDebit = movement.getBalanceAvailable().add(movement.getMovementAmount())
                         .subtract(movementsDTO.getMovementAmount()).setScale(2, RoundingMode.HALF_UP);
-                movements.setMovementAmount(movementsDTO.getMovementAmount());
-                movements.setBalanceAvailable(amountAvailableDebit);
+                movement.setMovementAmount(movementsDTO.getMovementAmount());
+                movement.setBalanceAvailable(amountAvailableDebit);
                 break;
             case CREDITO:
-                BigDecimal amountAvailableCredit = movements.getBalanceAvailable()
+                BigDecimal amountAvailableCredit = movement.getBalanceAvailable()
                         .add(movementsDTO.getMovementAmount()).setScale(2, RoundingMode.HALF_UP);
-                movements.setMovementAmount(movementsDTO.getMovementAmount());
-                movements.setBalanceAvailable(amountAvailableCredit);
+                movement.setMovementAmount(movementsDTO.getMovementAmount());
+                movement.setBalanceAvailable(amountAvailableCredit);
                 break;
         }
-        movements.setMovementType(movementsDTO.getMovementType());
-        movements.setMovementDate(new Date());
-        movements.setObservation(movementsDTO.getObservation());
-        movementsRepository.save(movements);
+        movement.setMovementType(movementsDTO.getMovementType());
+        movement.setMovementDate(new Date());
+        movement.setObservation(movementsDTO.getObservation());
+        movementsRepository.save(movement);
         return movementsDTO;
     }
 
