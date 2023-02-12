@@ -41,6 +41,6 @@ public class Account {
     @JoinColumn(name = "client_id")
     private Client client;
     @Builder.Default
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "account")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "account", fetch = FetchType.EAGER)
     private List<Movements> movements = new ArrayList<>();
 }

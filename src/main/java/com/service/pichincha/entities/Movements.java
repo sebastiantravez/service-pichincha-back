@@ -5,6 +5,7 @@ import com.service.pichincha.entities.enums.TransactionType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -26,6 +27,7 @@ import java.util.Date;
 @AllArgsConstructor
 public class Movements {
     @Id
+    @GeneratedValue
     private Long movementId;
     @NotNull
     private Date movementDate;

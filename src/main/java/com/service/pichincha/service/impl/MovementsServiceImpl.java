@@ -71,7 +71,8 @@ public class MovementsServiceImpl implements MovementsService {
                         throw new GenericException("Error: Saldo no disponible");
                     }
                     if (movementsDTO.getMovementAmount().compareTo(movementsQuery.getBalanceAvailable()) > 0) {
-                        throw new GenericException("Error: El valor del retiro debe ser menor o igual al saldo disponible del cliente");
+                        throw new GenericException("Error: El valor del retiro debe ser menor o igual al saldo disponible del cliente, " +
+                                "Su saldo disponible es de $:" + movementsQuery.getBalanceAvailable().setScale(2, RoundingMode.HALF_UP));
                     }
                     BigDecimal amountAvailableDebit = movementsQuery.getBalanceAvailable()
                             .subtract(movementsDTO.getMovementAmount()).setScale(2, RoundingMode.HALF_UP);
