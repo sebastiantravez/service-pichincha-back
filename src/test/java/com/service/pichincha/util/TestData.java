@@ -18,7 +18,7 @@ public class TestData {
 
     public Client client() {
         Client client = new Client();
-        client.setClientId(100L);
+        client.setId(100L);
         client.setFullName("PRUEBAS PRUEBAS");
         client.setAge(12);
         client.setGenderPerson(GenderPerson.MASCULINO);
