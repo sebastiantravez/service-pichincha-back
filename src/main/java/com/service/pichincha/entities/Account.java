@@ -21,26 +21,25 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Account {
     @Id
     @GeneratedValue
     private Long accountId;
     @NotNull
-    @Column(unique = true)
     private String accountNumber;
     @NotNull
     @Enumerated(EnumType.STRING)
     private AccountType accountType;
     @PositiveOrZero
     private BigDecimal initialAmount;
-    @Builder.Default
-    private Boolean status = Boolean.TRUE;
+    private Boolean status;
+    @NotNull
     private Date createDate;
+    @NotNull
     @ManyToOne
     @JoinColumn(name = "client_id")
     private Client client;
-    @Builder.Default
+    @NotNull
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "account", fetch = FetchType.EAGER)
-    private List<Movements> movements = new ArrayList<>();
+    private List<Movements> movements;
 }

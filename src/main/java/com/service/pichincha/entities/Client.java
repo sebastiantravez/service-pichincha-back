@@ -16,7 +16,6 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @PrimaryKeyJoinColumn(referencedColumnName = "id")
 public class Client extends Person{
     @Id

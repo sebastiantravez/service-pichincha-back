@@ -22,7 +22,6 @@ import java.util.Date;
 @Entity
 @Table(name = "movements")
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Movements {
@@ -40,6 +39,7 @@ public class Movements {
     private BigDecimal balanceAvailable;
     @Enumerated(EnumType.STRING)
     private TransactionType transactionType;
+    @NotNull
     @ManyToOne
     @JoinColumn(name = "account_id")
     private Account account;
