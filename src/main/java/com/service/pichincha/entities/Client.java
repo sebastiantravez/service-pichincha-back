@@ -17,10 +17,11 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@PrimaryKeyJoinColumn(referencedColumnName = "id")
 public class Client extends Person{
     @Id
     @GeneratedValue
-    private Long clientId;
+    private Long id;
     @NotNull
     private String password;
     @Builder.Default

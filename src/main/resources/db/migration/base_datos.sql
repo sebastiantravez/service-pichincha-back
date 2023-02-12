@@ -1,17 +1,25 @@
+--PERSON
+CREATE TABLE IF NOT EXISTS public.persons(
+    id numeric(16, 6) NOT NULL,
+    full_name character varying(200) COLLATE pg_catalog."default",
+    gender_person character varying(50) COLLATE pg_catalog."default",
+    age integer,
+    dni character varying(20) COLLATE pg_catalog."default",
+    identification_pattern character varying(50) COLLATE pg_catalog."default",
+    address character varying(250) COLLATE pg_catalog."default",
+    phone character varying(50) COLLATE pg_catalog."default",
+    create_date timestamp without time zone,
+    CONSTRAINT pk_person_id PRIMARY KEY (id),
+    CONSTRAINT persons_dni_key UNIQUE (dni)
+)
+
 --CLIENTS
 CREATE TABLE public.clients (
-	client_id numeric(16, 6) NOT NULL,
-	full_name varchar(200) NULL,
-	gender_person varchar(50) NULL,
-	age int4 NULL,
-	dni varchar(20) NULL,
-	identification_pattern varchar(50) NULL,
-	address varchar(250) NULL,
-	phone varchar(50) NULL,
-	create_date timestamp NULL,
-	"password" varchar(100) NULL,
-	status bool NULL DEFAULT true,
-	CONSTRAINT pk_client_id PRIMARY KEY (client_id)
+	id numeric(16, 6) NOT NULL,
+	password varchar(150) NOT NULL,
+	status bool NOT NULL,
+	CONSTRAINT client_pkey PRIMARY KEY (id),
+	CONSTRAINT fk_client_person FOREIGN KEY (id) REFERENCES persons(id)
 );
 
 --ACCOUNTS

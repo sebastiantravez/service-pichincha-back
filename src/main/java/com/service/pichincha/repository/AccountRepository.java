@@ -34,7 +34,7 @@ public interface AccountRepository extends CrudRepository<Account, Long> {
             "FROM Account a " +
             "JOIN a.client c " +
             "JOIN a.movements m " +
-            "WHERE c.clientId = :clientId " +
+            "WHERE c.id = :clientId " +
             "AND m.movementDate between :initDate and :endDate " +
             "AND a.accountType = :accountType " +
             "ORDER BY m.movementDate DESC")
