@@ -24,7 +24,6 @@ import java.util.Date;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Movements {
     @Id
     @GeneratedValue

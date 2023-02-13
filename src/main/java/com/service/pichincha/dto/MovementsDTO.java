@@ -14,7 +14,6 @@ import java.util.Date;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class MovementsDTO {
     private Long movementId;
     private Date movementDate;

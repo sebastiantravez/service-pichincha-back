@@ -3,14 +3,12 @@ package com.service.pichincha.dto;
 import com.service.pichincha.entities.enums.GenderPerson;
 import com.service.pichincha.entities.enums.IdentificationPattern;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class ClientDTO {
     private Long clientId;
     private String fullName;

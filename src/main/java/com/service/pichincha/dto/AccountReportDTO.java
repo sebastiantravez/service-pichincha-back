@@ -6,13 +6,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class AccountReportDTO {
     private String fullName;
     private String dni;
@@ -22,6 +20,5 @@ public class AccountReportDTO {
     private String initDate;
     private String endDate;
     private String status;
-    @Builder.Default
-    private List<AccountReportDetailDTO> accountReportDetail = new ArrayList<>();
+    private List<AccountReportDetailDTO> accountReportDetail;
 }
