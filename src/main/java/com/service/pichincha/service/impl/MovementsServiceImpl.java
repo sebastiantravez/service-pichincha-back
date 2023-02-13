@@ -53,9 +53,10 @@ public class MovementsServiceImpl implements MovementsService {
         switch (movementsDTO.getMovementType()) {
             case DEBITO:
                 if (movementsDTO.getMovementAmount().compareTo(initialAmount) > 0) {
-                    throw new GenericException(HttpStatus.BAD_REQUEST, "Error: El valor del retiro debe ser menor o igual al saldo disponible del cliente");
+                    throw new GenericException(HttpStatus.BAD_REQUEST, "Error: El valor del retiro debe ser menor o igual al saldo disponible del cliente,"
+                            + "Su saldo disponible es de $" + balanceAvailable);
                 }
-                if (balanceAvailable.compareTo(BigDecimal.ZERO) <= 0) {
+                if (balanceAvailable.subtract(movementsDTO.getMovementAmount()).compareTo(BigDecimal.ZERO) < 0) {
                     throw new GenericException(HttpStatus.BAD_REQUEST, "Error: Saldo no disponible");
                 }
                 this.verifyLimitAmount(account, movementsDTO);
