@@ -22,6 +22,7 @@ import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,58 +43,35 @@ public class MovementsServiceImpl implements MovementsService {
         Account account = accountRepository.findById(movementsDTO.getAccount().getAccountId())
                 .orElseThrow(() -> new GenericException(HttpStatus.NOT_FOUND, "Error: Cuenta de cliente no existe"));
 
-        //TODO here init first movement
         Movements movements = new Movements();
-        if (account.getMovements().isEmpty()) {
-            switch (movementsDTO.getMovementType()) {
-                case DEBITO:
-                    if (movementsDTO.getMovementAmount().compareTo(account.getInitialAmount()) > 0) {
-                        throw new GenericException(HttpStatus.BAD_REQUEST, "Error: El valor del retiro debe ser menor o igual al saldo disponible del cliente");
-                    }
-                    BigDecimal amountAvailableDebit = account.getInitialAmount()
-                            .subtract(movementsDTO.getMovementAmount()).setScale(2, RoundingMode.HALF_UP);
-                    if (amountAvailableDebit.compareTo(BigDecimal.ZERO) < 0) {
-                        throw new GenericException(HttpStatus.BAD_REQUEST, "Error: Saldo no disponible");
-                    }
-                    movements.setMovementAmount(movementsDTO.getMovementAmount());
-                    movements.setBalanceAvailable(amountAvailableDebit);
-                    break;
-                case CREDITO:
-                    BigDecimal amountAvailableCredit = account.getInitialAmount()
-                            .add(movementsDTO.getMovementAmount()).setScale(2, RoundingMode.HALF_UP);
-                    movements.setMovementAmount(movementsDTO.getMovementAmount());
-                    movements.setBalanceAvailable(amountAvailableCredit);
-                    break;
-            }
-        } else {
-            Movements movementsQuery = movementsRepository.findLastMove(movementsDTO.getAccount().getAccountId(), TransactionType.APROBADA.name())
-                    .orElseThrow(() -> new GenericException(HttpStatus.NOT_FOUND, "Error: Cuenta sin movimientos"));
-            switch (movementsDTO.getMovementType()) {
-                case DEBITO:
-                    if (movementsQuery.getBalanceAvailable().compareTo(BigDecimal.ZERO) <= 0) {
-                        throw new GenericException(HttpStatus.BAD_REQUEST, "Error: Saldo no disponible");
-                    }
-                    if (movementsDTO.getMovementAmount().compareTo(movementsQuery.getBalanceAvailable()) > 0) {
-                        throw new GenericException(HttpStatus.BAD_REQUEST, "Error: El valor del retiro debe ser menor o igual al saldo disponible del cliente, " +
-                                "Su saldo disponible es de $:" + movementsQuery.getBalanceAvailable().setScale(2, RoundingMode.HALF_UP));
-                    }
 
-                    //TODO verify limit amount per day
-                    this.verifyLimitAmount(account, movementsDTO);
+        Optional<Movements> movementsQuery = movementsRepository.findLastMove(movementsDTO.getAccount().getAccountId(), TransactionType.APROBADA.name());
 
-                    BigDecimal amountAvailableDebit = movementsQuery.getBalanceAvailable()
-                            .subtract(movementsDTO.getMovementAmount()).setScale(2, RoundingMode.HALF_UP);
-                    movements.setMovementAmount(movementsDTO.getMovementAmount());
-                    movements.setBalanceAvailable(amountAvailableDebit);
-                    break;
-                case CREDITO:
-                    BigDecimal amountAvailableCredit = movementsQuery.getBalanceAvailable()
-                            .add(movementsDTO.getMovementAmount()).setScale(2, RoundingMode.HALF_UP);
-                    movements.setMovementAmount(movementsDTO.getMovementAmount());
-                    movements.setBalanceAvailable(amountAvailableCredit);
-                    break;
-            }
+        BigDecimal initialAmount = account.getMovements().isEmpty() ? account.getInitialAmount() : movementsDTO.getMovementAmount();
+        BigDecimal balanceAvailable = movementsQuery.isPresent() ? movementsQuery.get().getBalanceAvailable() : initialAmount;
+
+        switch (movementsDTO.getMovementType()) {
+            case DEBITO:
+                if (movementsDTO.getMovementAmount().compareTo(initialAmount) > 0) {
+                    throw new GenericException(HttpStatus.BAD_REQUEST, "Error: El valor del retiro debe ser menor o igual al saldo disponible del cliente");
+                }
+                if (balanceAvailable.compareTo(BigDecimal.ZERO) <= 0) {
+                    throw new GenericException(HttpStatus.BAD_REQUEST, "Error: Saldo no disponible");
+                }
+                this.verifyLimitAmount(account, movementsDTO);
+                BigDecimal amountAvailableDebit = balanceAvailable
+                        .subtract(movementsDTO.getMovementAmount()).setScale(2, RoundingMode.HALF_UP);
+                movements.setMovementAmount(movementsDTO.getMovementAmount());
+                movements.setBalanceAvailable(amountAvailableDebit);
+                break;
+            case CREDITO:
+                BigDecimal amountAvailableCredit = balanceAvailable
+                        .add(movementsDTO.getMovementAmount()).setScale(2, RoundingMode.HALF_UP);
+                movements.setMovementAmount(movementsDTO.getMovementAmount());
+                movements.setBalanceAvailable(amountAvailableCredit);
+                break;
         }
+
         movements.setAccount(account);
         movements.setMovementType(movementsDTO.getMovementType());
         movements.setMovementDate(new Date());
@@ -102,13 +80,18 @@ public class MovementsServiceImpl implements MovementsService {
         movementsRepository.save(movements);
     }
 
-    private void verifyLimitAmount(Account account, MovementsDTO movementsDTO){
+    private void verifyLimitAmount(Account account, MovementsDTO movementsDTO) {
+
+        if (account.getMovements().isEmpty()) return;
+
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
         Date lastMovementDate = account.getMovements().stream()
                 .filter(movementType -> movementType.getMovementType().equals(MovementType.DEBITO))
                 .map(data -> data.getMovementDate())
-                .max(Date::compareTo).get();
+                .max(Date::compareTo).orElse(null);
+
+        if (lastMovementDate == null) return;
 
         String nowDate = simpleDateFormat.format(new Date());
         String lastMovementDateString = simpleDateFormat.format(lastMovementDate);
@@ -168,7 +151,7 @@ public class MovementsServiceImpl implements MovementsService {
     @Override
     public void deleteMovement(Long movementId) {
         Movements movementCanceled = movementsRepository.findById(movementId)
-                    .orElseThrow(() -> new GenericException(HttpStatus.NOT_FOUND, "No existe movimiento"));
+                .orElseThrow(() -> new GenericException(HttpStatus.NOT_FOUND, "No existe movimiento"));
         Movements movementsApproved = movementsRepository.findLastMove(movementCanceled.getAccount().getAccountId(), TransactionType.APROBADA.name())
                 .orElseThrow(() -> new GenericException(HttpStatus.NOT_FOUND, "Error: Cuenta sin movimientos"));
         Movements newMovement = new Movements();
