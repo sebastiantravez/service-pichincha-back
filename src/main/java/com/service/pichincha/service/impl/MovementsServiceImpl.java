@@ -79,29 +79,7 @@ public class MovementsServiceImpl implements MovementsService {
                     }
 
                     //TODO verify limit amount per day
-                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-
-                    Date lastMovementDate = account.getMovements().stream()
-                            .filter(movementType -> movementType.getMovementType().equals(MovementType.DEBITO))
-                            .map(data -> data.getMovementDate())
-                            .max(Date::compareTo).get();
-
-                    String nowDate = simpleDateFormat.format(new Date());
-                    String lastMovementDateString = simpleDateFormat.format(lastMovementDate);
-
-                    BigDecimal amountAccumulated = account.getMovements().stream()
-                            .filter(movementsFilter -> movementsFilter.getMovementType().equals(MovementType.DEBITO))
-                            .filter(dates -> {
-                                String dateFilter = simpleDateFormat.format(dates.getMovementDate());
-                                return lastMovementDateString.equals(dateFilter);
-                            })
-                            .map(amount -> amount.getMovementAmount())
-                            .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                    if (amountAccumulated.add(movementsDTO.getMovementAmount())
-                            .compareTo(AmountLimit.LIMIT_DAY.getValue()) > 0 && nowDate.equals(lastMovementDateString)) {
-                        throw new GenericException(HttpStatus.BAD_REQUEST, "Error: Cupo diario excedido");
-                    }
+                    this.verifyLimitAmount(account, movementsDTO);
 
                     BigDecimal amountAvailableDebit = movementsQuery.getBalanceAvailable()
                             .subtract(movementsDTO.getMovementAmount()).setScale(2, RoundingMode.HALF_UP);
@@ -122,6 +100,32 @@ public class MovementsServiceImpl implements MovementsService {
         movements.setObservation(movementsDTO.getObservation());
         movements.setTransactionType(TransactionType.APROBADA);
         movementsRepository.save(movements);
+    }
+
+    private void verifyLimitAmount(Account account, MovementsDTO movementsDTO){
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+        Date lastMovementDate = account.getMovements().stream()
+                .filter(movementType -> movementType.getMovementType().equals(MovementType.DEBITO))
+                .map(data -> data.getMovementDate())
+                .max(Date::compareTo).get();
+
+        String nowDate = simpleDateFormat.format(new Date());
+        String lastMovementDateString = simpleDateFormat.format(lastMovementDate);
+
+        BigDecimal amountAccumulated = account.getMovements().stream()
+                .filter(movementsFilter -> movementsFilter.getMovementType().equals(MovementType.DEBITO))
+                .filter(dates -> {
+                    String dateFilter = simpleDateFormat.format(dates.getMovementDate());
+                    return lastMovementDateString.equals(dateFilter);
+                })
+                .map(amount -> amount.getMovementAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (amountAccumulated.add(movementsDTO.getMovementAmount())
+                .compareTo(AmountLimit.LIMIT_DAY.getValue()) > 0 && nowDate.equals(lastMovementDateString)) {
+            throw new GenericException(HttpStatus.BAD_REQUEST, "Error: Cupo diario excedido");
+        }
     }
 
     @Override
