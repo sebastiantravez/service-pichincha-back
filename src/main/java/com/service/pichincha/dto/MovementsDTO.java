@@ -4,7 +4,6 @@ package com.service.pichincha.dto;
 import com.service.pichincha.entities.enums.MovementType;
 import com.service.pichincha.entities.enums.TransactionType;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
