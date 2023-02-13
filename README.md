@@ -4,7 +4,7 @@ Clonar proyecto desde el repositorio.
 
 Descargar las dependencias del build.gradle.
 
-El proyecto fue desarrollado con flyway para la creacion de tablas y carga de datos iniciales, dentro del archivo: /resources/db/migration/script.sql se encuentran el script para creacion de tablas y carga de datos iniciales.
+El proyecto fue desarrollado con flyway para la creacion de tablas y carga de datos iniciales, dentro del archivo: /resources/db/migration/base_datos.sql se encuentran el script para creacion de tablas y carga de datos iniciales.
 
 El proyecto se despliega en el puerto 8080 deacuerdo a la configuración en el archivo application.yml.
 
