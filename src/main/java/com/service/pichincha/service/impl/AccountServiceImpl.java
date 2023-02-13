@@ -14,6 +14,7 @@ import com.service.pichincha.service.AccountService;
 import net.sf.jasperreports.engine.JRException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -40,18 +41,18 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public void saveAccount(AccountDTO accountDTO) {
         Client client = clientRepository.findById(accountDTO.getClient().getClientId())
-                .orElseThrow(() -> new GenericException("Cliente no existe, no se puede crear cuenta, debe crear el cliente"));
+                .orElseThrow(() -> new GenericException(HttpStatus.NOT_FOUND, "Cliente no existe, no se puede crear cuenta, debe crear el cliente"));
 
         Optional<Account> accountQuery = accountRepository.findByAccountTypeAndClient(accountDTO.getAccountType(),
                 client);
 
         if (accountQuery.isPresent()) {
-            throw new GenericException("Error: Cliente ya tiene un registro de cuentas con el banco");
+            throw new GenericException(HttpStatus.BAD_REQUEST, "Error: Cliente ya tiene un registro de cuentas con el banco");
         }
 
         Optional<Account> accountQuery2 = accountRepository.findByAccountNumber(accountDTO.getAccountNumber());
         if (accountQuery2.isPresent()) {
-            throw new GenericException("Error: Numero de cuenta ya existe");
+            throw new GenericException(HttpStatus.BAD_REQUEST, "Error: Numero de cuenta ya existe");
         }
 
         Account account = modelMapper.map(accountDTO, Account.class);
@@ -64,11 +65,11 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public AccountDTO updateAccount(AccountDTO accountDTO) {
         Account account = accountRepository.findById(accountDTO.getAccountId())
-                .orElseThrow(() -> new GenericException("Cuenta de cliente no existe, no se puede actualizar"));
+                .orElseThrow(() -> new GenericException(HttpStatus.NOT_FOUND, "Cuenta de cliente no existe, no se puede actualizar"));
         BigDecimal initialAmount = account.getInitialAmount().setScale(2, RoundingMode.HALF_UP);
         BigDecimal modifyInitialAmount = accountDTO.getInitialAmount().setScale(2, RoundingMode.HALF_UP);
         if (!initialAmount.equals(modifyInitialAmount) && account.getMovements().size() > 0) {
-            throw new GenericException("Error: No se puede modificar el saldo inicial, el cliente tiene movimientos");
+            throw new GenericException(HttpStatus.BAD_REQUEST, "Error: No se puede modificar el saldo inicial, el cliente tiene movimientos");
         }
         account.setAccountNumber(accountDTO.getAccountNumber());
         account.setStatus(accountDTO.getStatus());
@@ -82,7 +83,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public void deleteAccount(Long accountId) {
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new GenericException("Cuenta de cliente no existe, no se puede eliminar"));
+                .orElseThrow(() -> new GenericException(HttpStatus.NOT_FOUND, "Cuenta de cliente no existe, no se puede eliminar"));
         account.setStatus(Boolean.FALSE);
         accountRepository.save(account);
     }
@@ -98,7 +99,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public List<AccountDTO> getAccountsByClient(Long clientId) {
         Client client = clientRepository.findById(clientId)
-                .orElseThrow(() -> new GenericException("Error: Cliente no existe"));
+                .orElseThrow(() -> new GenericException(HttpStatus.NOT_FOUND,"Error: Cliente no existe"));
         return accountRepository.findByClient(client)
                 .stream().filter(account -> account.getStatus())
                 .map(this::buildAccountDTO)
@@ -108,7 +109,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public AccountReportDTO getAccountStatus(Long clientId, AccountType accountType, Date initDate, Date endDate) {
         Account account = accountRepository.findAccountsMovements(clientId, accountType, initDate, endDate)
-                .orElseThrow(() -> new GenericException("Cliente sin movimientos en su cuenta"));
+                .orElseThrow(() -> new GenericException(HttpStatus.BAD_REQUEST, "Cliente sin movimientos en su cuenta"));
         AccountReportDTO reportDTO = new AccountReportDTO();
         DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
         String initDateFormat = dateFormat.format(initDate);

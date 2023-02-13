@@ -12,7 +12,9 @@ public class GenericExceptionHandler {
 
     @ExceptionHandler(GenericException.class)
     public ResponseEntity<ExceptionResponse> customExceptionHandler(GenericException exception) {
-        ExceptionResponse exceptionResponse = ExceptionResponse.builder().code(exception.getStatus().value()).message(exception.getMessage()).build();
+        ExceptionResponse exceptionResponse = ExceptionResponse.builder()
+                .code(exception.getStatus().value() + " " + exception.getStatus().name())
+                .message(exception.getMessage()).build();
         ResponseEntity<ExceptionResponse> response = new ResponseEntity<>(exceptionResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         return response;
     }

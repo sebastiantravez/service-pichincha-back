@@ -14,6 +14,7 @@ import com.service.pichincha.repository.MovementsRepository;
 import com.service.pichincha.service.MovementsService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -36,10 +37,10 @@ public class MovementsServiceImpl implements MovementsService {
     @Override
     public void saveMovement(MovementsDTO movementsDTO) {
         if (movementsDTO.getMovementAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new GenericException("Error: El valor del movimiento debe ser superior a 0");
+            throw new GenericException(HttpStatus.BAD_REQUEST, "Error: El valor del movimiento debe ser superior a 0");
         }
         Account account = accountRepository.findById(movementsDTO.getAccount().getAccountId())
-                .orElseThrow(() -> new GenericException("Error: Cuenta de cliente no existe"));
+                .orElseThrow(() -> new GenericException(HttpStatus.NOT_FOUND, "Error: Cuenta de cliente no existe"));
 
         //TODO here init first movement
         Movements movements = new Movements();
@@ -47,12 +48,12 @@ public class MovementsServiceImpl implements MovementsService {
             switch (movementsDTO.getMovementType()) {
                 case DEBITO:
                     if (movementsDTO.getMovementAmount().compareTo(account.getInitialAmount()) > 0) {
-                        throw new GenericException("Error: El valor del retiro debe ser menor o igual al saldo disponible del cliente");
+                        throw new GenericException(HttpStatus.BAD_REQUEST, "Error: El valor del retiro debe ser menor o igual al saldo disponible del cliente");
                     }
                     BigDecimal amountAvailableDebit = account.getInitialAmount()
                             .subtract(movementsDTO.getMovementAmount()).setScale(2, RoundingMode.HALF_UP);
                     if (amountAvailableDebit.compareTo(BigDecimal.ZERO) < 0) {
-                        throw new GenericException("Error: Saldo no disponible");
+                        throw new GenericException(HttpStatus.BAD_REQUEST, "Error: Saldo no disponible");
                     }
                     movements.setMovementAmount(movementsDTO.getMovementAmount());
                     movements.setBalanceAvailable(amountAvailableDebit);
@@ -66,14 +67,14 @@ public class MovementsServiceImpl implements MovementsService {
             }
         } else {
             Movements movementsQuery = movementsRepository.findLastMove(movementsDTO.getAccount().getAccountId(), TransactionType.APROBADA.name())
-                    .orElseThrow(() -> new GenericException("Error: Cuenta sin movimientos"));
+                    .orElseThrow(() -> new GenericException(HttpStatus.NOT_FOUND, "Error: Cuenta sin movimientos"));
             switch (movementsDTO.getMovementType()) {
                 case DEBITO:
                     if (movementsQuery.getBalanceAvailable().compareTo(BigDecimal.ZERO) <= 0) {
-                        throw new GenericException("Error: Saldo no disponible");
+                        throw new GenericException(HttpStatus.BAD_REQUEST, "Error: Saldo no disponible");
                     }
                     if (movementsDTO.getMovementAmount().compareTo(movementsQuery.getBalanceAvailable()) > 0) {
-                        throw new GenericException("Error: El valor del retiro debe ser menor o igual al saldo disponible del cliente, " +
+                        throw new GenericException(HttpStatus.BAD_REQUEST, "Error: El valor del retiro debe ser menor o igual al saldo disponible del cliente, " +
                                 "Su saldo disponible es de $:" + movementsQuery.getBalanceAvailable().setScale(2, RoundingMode.HALF_UP));
                     }
 
@@ -81,7 +82,7 @@ public class MovementsServiceImpl implements MovementsService {
                     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
                     Date lastMovementDate = account.getMovements().stream()
-                            .filter(movements1 -> movements1.getMovementType().equals(MovementType.DEBITO))
+                            .filter(movementType -> movementType.getMovementType().equals(MovementType.DEBITO))
                             .map(data -> data.getMovementDate())
                             .max(Date::compareTo).get();
 
@@ -99,7 +100,7 @@ public class MovementsServiceImpl implements MovementsService {
 
                     if (amountAccumulated.add(movementsDTO.getMovementAmount())
                             .compareTo(AmountLimit.LIMIT_DAY.getValue()) > 0 && nowDate.equals(lastMovementDateString)) {
-                        throw new GenericException("Error: Cupo diario excedido");
+                        throw new GenericException(HttpStatus.BAD_REQUEST, "Error: Cupo diario excedido");
                     }
 
                     BigDecimal amountAvailableDebit = movementsQuery.getBalanceAvailable()
@@ -126,11 +127,11 @@ public class MovementsServiceImpl implements MovementsService {
     @Override
     public MovementsDTO updateMovement(MovementsDTO movementsDTO) {
         Movements movement = movementsRepository.findById(movementsDTO.getMovementId())
-                .orElseThrow(() -> new GenericException("Error: Movimiento no existe"));
+                .orElseThrow(() -> new GenericException(HttpStatus.BAD_REQUEST, "Error: Movimiento no existe"));
         switch (movementsDTO.getMovementType()) {
             case DEBITO:
                 if (movementsDTO.getMovementAmount().compareTo(movement.getBalanceAvailable()) > 0) {
-                    throw new GenericException("Error: El valor del retiro debe ser menor o igual al saldo disponible del cliente, " +
+                    throw new GenericException(HttpStatus.BAD_REQUEST, "Error: El valor del retiro debe ser menor o igual al saldo disponible del cliente, " +
                             "Su saldo disponible es de $:" + movement.getBalanceAvailable().setScale(2, RoundingMode.HALF_UP));
                 }
                 BigDecimal amountAvailableDebit = movement.getBalanceAvailable().add(movement.getMovementAmount())
@@ -163,9 +164,9 @@ public class MovementsServiceImpl implements MovementsService {
     @Override
     public void deleteMovement(Long movementId) {
         Movements movementCanceled = movementsRepository.findById(movementId)
-                .orElseThrow(() -> new GenericException("No existe movimiento"));
+                    .orElseThrow(() -> new GenericException(HttpStatus.NOT_FOUND, "No existe movimiento"));
         Movements movementsApproved = movementsRepository.findLastMove(movementCanceled.getAccount().getAccountId(), TransactionType.APROBADA.name())
-                .orElseThrow(() -> new GenericException("Error: Cuenta sin movimientos"));
+                .orElseThrow(() -> new GenericException(HttpStatus.NOT_FOUND, "Error: Cuenta sin movimientos"));
         Movements newMovement = new Movements();
         switch (movementCanceled.getMovementType()) {
             case DEBITO:

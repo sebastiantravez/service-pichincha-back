@@ -26,28 +26,19 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public void save(ClientDTO clientDTO) {
-        Optional<Client> client = clientRepository.findByDni(clientDTO.getDni());
-        if (client.isPresent()) {
-            throw new GenericException("Cliente ya existe");
+        Optional<Client> clientExist = clientRepository.findByDni(clientDTO.getDni());
+        if (clientExist.isPresent()) {
+            throw new GenericException(HttpStatus.BAD_REQUEST, "Cliente ya existe");
         }
-        Client saveClient = new Client();
-        saveClient.setFullName(clientDTO.getFullName());
-        saveClient.setGenderPerson(clientDTO.getGenderPerson());
-        saveClient.setAge(clientDTO.getAge());
-        saveClient.setDni(clientDTO.getDni());
-        saveClient.setIdentificationPattern(clientDTO.getIdentificationPattern());
-        saveClient.setAddress(clientDTO.getAddress());
-        saveClient.setPhone(clientDTO.getPhone());
-        saveClient.setPassword(clientDTO.getPassword());
-        saveClient.setStatus(Boolean.TRUE);
-        saveClient.setCreateDate(new Date());
-        clientRepository.save(saveClient);
+        Client client = modelMapper.map(clientDTO, Client.class);
+        client.setCreateDate(new Date());
+        clientRepository.save(client);
     }
 
     @Override
     public ClientDTO updateClient(ClientDTO clientDTO) {
         Client client = clientRepository.findByDni(clientDTO.getDni())
-                .orElseThrow(() -> new GenericException("Cliente no existe, no se puede actualizar datos"));
+                .orElseThrow(() -> new GenericException(HttpStatus.NOT_FOUND, "Cliente no existe, no se puede actualizar datos"));
         client.setFullName(clientDTO.getFullName());
         client.setGenderPerson(clientDTO.getGenderPerson());
         client.setAge(clientDTO.getAge());
@@ -57,7 +48,6 @@ public class ClientServiceImpl implements ClientService {
         client.setPhone(clientDTO.getPhone());
         client.setStatus(clientDTO.getStatus());
         client.setPassword(clientDTO.getPassword());
-        client.setCreateDate(new Date());
         clientRepository.save(client);
         return clientDTO;
     }
@@ -74,7 +64,7 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public void deleteClientById(Long clientId) {
         Client client = clientRepository.findById(clientId).orElseThrow(() ->
-                new GenericException("Cliente no existe, no se puede eliminar"));
+                new GenericException(HttpStatus.NOT_FOUND, "Cliente no existe, no se puede eliminar"));
         client.setStatus(Boolean.FALSE);
         clientRepository.save(client);
     }
